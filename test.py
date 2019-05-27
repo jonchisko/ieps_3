@@ -61,7 +61,7 @@ def process_string(s, filename):
 
     #join all the lines to create a single string
     if filename != "evem.gov.si.55.html":
-        obdelan_tekst = "".join(razdeljen)
+        obdelan_tekst = " ".join(razdeljen)
     else:
         obdelan_tekst = razdeljen[-1]
 
@@ -109,73 +109,73 @@ def repetitions(vocab, actual_text):
                             slovar[word]["okolje"].append(actual_text[j - 4:j + 1])
 
     return slovar
+if __name__ == '__main__':
+    solution = []
+    for mypath in directories:
+        files = get_files_in_directory(mypath)
+        print(f"Domain: {mypath}")
 
-solution = []
-for mypath in directories:
-    files = get_files_in_directory(mypath)
-    print(f"Domain: {mypath}")
-
-    slovar = dict()
-    for file in files:
-        print("       Working for file: " + file)
-        filename = file
-        file = mypath + "/" + file
-        soup = BeautifulSoup(open(file, encoding="utf-8"), "html.parser")
-        print("             Opened soup")
-        vocab, actual_text = process_string(soup.text, filename)
+        slovar = dict()
+        for file in files:
+            print("       Working for file: " + file)
+            filename = file
+            file = mypath + "/" + file
+            soup = BeautifulSoup(open(file, encoding="utf-8"), "html.parser")
+            print("             Opened soup")
+            vocab, actual_text = process_string(soup.text, filename)
 
 
 
-        print("             Retrieved vocab")
-        indexes = repetitions(vocab, actual_text)
-        print("             Calculated repetitions")
-        slovar[filename] = dict()
+            print("             Retrieved vocab")
+            indexes = repetitions(vocab, actual_text)
+            print("             Calculated repetitions")
+            slovar[filename] = dict()
 
-        for word in vocab:
-            #morem lowerat, ker prej nism
-            slovar[filename][word.lower()] = (",".join(indexes[word]["indexes"]), str(len(indexes[word]["indexes"])), indexes[word]["okolje"])
-    print("------------------------------------------------")
-    outfile = open(mypath + "pickle", "wb")
-    pickle.dump(slovar, outfile)
+            for word in vocab:
+                #morem lowerat, ker prej nism
+                slovar[filename][word.lower()] = (",".join(indexes[word]["indexes"]), str(len(indexes[word]["indexes"])), indexes[word]["okolje"])
+        print("------------------------------------------------")
+        outfile = open(mypath + "pickle", "wb")
+        pickle.dump(slovar, outfile)
+        outfile.close()
+        solution.append(slovar)
+
+    infile1 = open("e-prostor.gov.sipickle", "rb")
+    infile2 = open("e-uprava.gov.sipickle", "rb")
+    infile3 = open("evem.gov.sipickle", "rb")
+    infile4 = open("podatki.gov.sipickle", "rb")
+
+    eprostor = pickle.load(infile1, encoding="bytes")
+    euprava = pickle.load(infile2, encoding="bytes")
+    evem = pickle.load(infile3, encoding="bytes")
+    podatki = pickle.load(infile4, encoding="bytes")
+
+    documentNames = []
+    words = []
+    frequency = []
+    indexes = []
+    okolje = []
+    for slovar in [eprostor, euprava, evem, podatki]:
+
+        for filename in slovar.keys():
+
+            for word in slovar[filename].keys():
+                documentNames.append(filename)
+                words.append(word)
+                frequency.append(int(slovar[filename][word][1]))
+                indexes.append(slovar[filename][word][0])
+                okolje.append(slovar[filename][word][2])
+
+
+    solution = {"documentName": documentNames, "word": words, "frequency": frequency, "indexes": indexes, "surroundings": okolje}
+    for i in range(len(solution["word"])):
+        print(solution["word"][i])
+        print(solution["indexes"][i])
+        print(solution["frequency"][i])
+        print(solution["surroundings"][i])
+
+        if i == 10:
+            break
+    outfile = open("final.pickle", "wb")
+    pickle.dump(solution, outfile)
     outfile.close()
-    solution.append(slovar)
-
-infile1 = open("e-prostor.gov.sipickle", "rb")
-infile2 = open("e-uprava.gov.sipickle", "rb")
-infile3 = open("evem.gov.sipickle", "rb")
-infile4 = open("podatki.gov.sipickle", "rb")
-
-eprostor = pickle.load(infile1, encoding="bytes")
-euprava = pickle.load(infile2, encoding="bytes")
-evem = pickle.load(infile3, encoding="bytes")
-podatki = pickle.load(infile4, encoding="bytes")
-
-documentNames = []
-words = []
-frequency = []
-indexes = []
-okolje = []
-for slovar in [eprostor, euprava, evem, podatki]:
-
-    for filename in slovar.keys():
-
-        for word in slovar[filename].keys():
-            documentNames.append(filename)
-            words.append(word)
-            frequency.append(int(slovar[filename][word][1]))
-            indexes.append(slovar[filename][word][0])
-            okolje.append(slovar[filename][word][2])
-
-
-solution = {"documentName": documentNames, "word": words, "frequency": frequency, "indexes": indexes, "surroundings": okolje}
-for i in range(len(solution["word"])):
-    print(solution["word"][i])
-    print(solution["indexes"][i])
-    print(solution["frequency"][i])
-    print(solution["surroundings"][i])
-
-    if i == 10:
-        break
-outfile = open("final.pickle", "wb")
-pickle.dump(solution, outfile)
-outfile.close()
