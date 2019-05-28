@@ -7,4 +7,5 @@ Tretja seminarska naloga pri predmetu IEPS
 3.) Prenesite repozitorj  
 4.) Razpakirajte datoteke.zip znotraj prenesenega repozitorija  
 5.) V konzoli se premaknite v repozitorij  
-6.) poženite ukaz python test2.py  
+6.) Poženite ukaz python test2.py  
+7.) Programi ustvari datoteko "final_take2.pickle", ki se uporabi za generacijo baze  
