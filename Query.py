@@ -5,15 +5,34 @@ from bs4 import BeautifulSoup
 import os
 from test2 import process_string
 import time
+import sys
+import pickle
 
 # class
 class QueryMe:
 
-    def __init__(self, direktorij):
+    def __init__(self):
         # open files
+        direktorij = "data_websites"
         print("Preparing files, please wait ...")
         t1 = time.time()
-        self.text_files = {filename : self.file2string(direktorij+"/"+filename) for filename in os.listdir(direktorij)}
+        self.cur = self.create_conn("index.db").cursor()
+
+        file = "text_files_pickle"
+
+        if os.path.isfile(file):
+            print("Pickled text dict exists!")
+            f = open(file, "rb")
+            self.text_files = pickle.load(f)
+            f.close()
+        else:
+            print("Pickled text dict does not exist, creating one. This might take up to one minute!")
+            self.text_files = {filename : self.file2string(direktorij+"/"+filename) for filename in os.listdir(direktorij)}
+            print("Saving pickle text dict!")
+            f = open(file, "wb")
+            pickle.dump(self.text_files, f)
+            f.close()
+
         print("Took me: {0:.2f} seconds".format(time.time()-t1))
         print("Ready for searching ...")
 
@@ -34,11 +53,13 @@ class QueryMe:
 
 
     def select_row(self, conn, words):
-        cur = conn.cursor()
+        #cur = self.conn.cursor()
+
         file_dict = dict()
         for word in words:
-            cur.execute("SELECT * FROM Posting WHERE word = '{0}'".format(word))
-            for row in cur.fetchall():
+            self.cur.execute("SELECT * FROM Posting WHERE word = '{0}'".format(word))
+            t1 = time.time()
+            for row in self.cur.fetchall():
                 if row[1] not in file_dict:
                     file_dict[row[1]] = {"freq": row[2], "index": set()}
                     for x in row[3].split(" "):
@@ -61,15 +82,23 @@ class QueryMe:
                 indeksi = sorted(indeksi)
                 for i, ind in enumerate(indeksi):
                     if len(indeksi) == 1:
-                        snip += text[ind]
+                        start = ind - 3 if ind - 3 >= 0 else 0
+                        if start != 0:
+                            snip += "..."
+                        end = ind + 3 + 1 if ind + 3 + 1 <= len(text) else len(text)
+                        snip += " ".join(text[start:end])
+                        if end != len(text):
+                            snip += " ..."
                         break
                     if i == 0:
                         start = ind - 3 if ind - 3 >= 0 else 0
                         diff = indeksi[i + 1] - ind
                         if diff > 3:
-                            snip += " " + " ".join(text[start:ind + 3 + 1]) + " ..."
+                            token = " ".join(text[start:ind + 3 + 1]) + " ..."
+                            snip += token if start == 0 else "... " + token
                         else:
-                            snip += " " + " ".join(text[start:indeksi[i + 1]])
+                            token = " ".join(text[start:indeksi[i + 1]])
+                            snip += token if start == 0 else "... " + token
                     elif i > 0 and i != len(indeksi) - 1:
                         # indeksi[i-1]+3 ind-3
                         # e1 e2 e3 e4 e5 e6 e7 e8    e9   e10 e11 e12 e13 e14
@@ -110,22 +139,30 @@ class QueryMe:
 
 
     def ind_search(self, queries):
-        conn = self.create_conn("index.db")
+        #conn = self.create_conn("index.db")
         queries = [x.lower() for x in process_string(queries, "")[0]]
-        return self.select_row(conn, queries)
+        return self.select_row("a", queries)
 
 
+    def doSearch(self, query, seq_ind):
+        t1 = time.time()
+        if seq_ind == "seq":
+            s = self.sequential_search(query)
+        elif seq_ind == "ind":
+            s = self.ind_search(query)
+        else:
+            print("Wrong search type specificed, use 'seq' for sequential or 'ind' for db!")
+            return
+        t2 = time.time()
+        print("Results for a query:", query)
+        print("Results found in {0:.2f} ms.".format((t2-t1)*1000))
 
-    """def process_text(self, s):
-        razdeljen = s.split("\n")
-        razdeljen = [x + " " for x in razdeljen if x and "/*" not in x and ";" not in x and "*/" not in x]
-        obdelan_tekst = "".join(razdeljen)
-        a = word_tokenize(obdelan_tekst)
-        a = [x for x in a if
-             x != "," and x != ";" and x != "(" and x != ")" and x != "." and x != ":"
-             and x != "!" and x != "?" and x != "<" and x != ">" and x != "#"]
-        vocab = [word.lower() for word in a if word.lower() not in stop_words_slovene]
-        return vocab"""
+        # print it
+        print("Frequencies Document                                  Snippet")
+        print("----------- ----------------------------------------- -----------------------------------------------------------")
+        for e in s:
+            print("%-5s       %-41s %s" % (e[0], e[1], e[2]))
+
 
     def file2string(self, filename):
         with open(filename, "rt", encoding="utf-8") as f:
@@ -146,20 +183,25 @@ class QueryMe:
             for i in range(len(text)):
                 if text[i].lower() in query_set:
                     freq += 1
-                    start = i-3 if i > 3 else 0
+                    start = i-3 if i-3 >= 0 else 0
                     to_add = 4 #
-                    if i - last_snip_ind > 4:
-                        snip += " ... "
-                        snip += " ".join(text[start:i])
+                    if last_snip_ind == 0:
+                        token = " ".join(text[start:i])
+                        snip += token if start == 0 else "... " + token
                     else:
-                        snip += " ".join(text[last_snip_ind+1:i])
+                        if i - last_snip_ind > 4:
+                            snip += " ... "
+                            snip += " ".join(text[start:i])
+                        else:
+                            snip += " ".join(text[last_snip_ind+1:i])
                 if to_add > 0:
                     snip += " " + text[i]
                     last_snip_ind = i
                     to_add -= 1
             if last_snip_ind != i:
                 snip += " ..."
-            results.append( (freq, file, snip) )
+            if freq > 0:
+                results.append( (freq, file, snip) )
         results = sorted(results, key=lambda x: x[0], reverse=True)
         return results
 
@@ -169,20 +211,17 @@ class QueryMe:
 
 if __name__ == '__main__':
 
-    nizi = ["predelovalne dejavnosti", "trgovina", "social services", "davki", "delo informacije", "sistem SPOT"]
-    QS = QueryMe("data_websites")
+    #nizi = ["predelovalne dejavnosti", "trgovina", "social services", "davki", "delo informacije", "sistem SPOT"]
 
+    """
+    rabis "data_websites" folder s spletnimi stranmi
+    rabis index.db
+    zgornje dve stvari rabis imeti na isti lokaciji kot kodo
+    seq
+    ind
+    """
 
-    for niz in nizi:
-        t1 = time.time()
-        r = QS.sequential_search(niz)
-        t_seq = time.time() - t1
-        for e in r:
-            print(e)
-        t1 = time.time()
-        s = QS.ind_search(niz)
-        t_ind = time.time()-t1
-        print(s)
-        print(t_seq)
-        print(t_ind)
-
+    sekve_baza = sys.argv[1]
+    nizi = " ".join(sys.argv[2:])
+    QS = QueryMe()
+    QS.doSearch(nizi, seq_ind=sekve_baza)
