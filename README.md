@@ -16,4 +16,4 @@ Tretja seminarska naloga pri predmetu IEPS
 
 2.) Vsebino "indexer" direktorija je treba razpakirati v nek direktorij, kjer se nahaja direktorij s html datotekami imenovan "data_websites" in podatkovna baza imenovana "inverted-index.db". To je pomembno, saj so nekatere lokacije fiksirane in ker je v kodi Query.py import: from test2 import process_string, ki ne deluje, če je koda v indexer direktoriju (če pustimo kodo v indexer direktoriju, je to treba zamenjati s from indexer.test2 import process_string, a se mogoče lahko pojavijo težave še kje drugje, zato to odsvetujemo).
 
-3.) Ko je to urejeno, lahko zaženemo program: python QueryMe ind sistem SPOT za iskanje v bazi ali python QueryMe seq sistem SPOT za sekvenčno iskanje. V osnovi se kliče tako: python QueryMe način_iskanja naštej_iskane_besede.
+3.) Ko je to urejeno, lahko zaženemo program: python Query.py ind sistem SPOT za iskanje v bazi ali python Query.py seq sistem SPOT za sekvenčno iskanje. V osnovi se kliče tako: python Query.py način_iskanja naštej_iskane_besede.
