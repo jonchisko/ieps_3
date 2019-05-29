@@ -14,6 +14,6 @@ Tretja seminarska naloga pri predmetu IEPS
 # Navodila za zagon
 1.) Pred zagonom potrebujemo še (če nimamo) naslednje knjižnice: sqlite3, bs4, os, time, sys, pickle.
 
-2.) Vsebino "indexer" direktorija je treba razpakirati v nek direktorij, kjer se nahaja direktorij s html datotekami imenovan "data_websites" in podatkovna baza imenovana "inverted-index.db". To je pomembno, saj so nekatere lokacije fiksirane in ker je v kodi Query.py import: from test2 import process_string, ki ne deluje, če je koda v indexer direktoriju (če pustimo kodo v indexer direktoriju, je to treba zamenjati s from indexer.test2 import process_string, a se mogoče lahko pojavijo težave še kje drugje, zato to odsvetujemo).
+2.) Vsebino "indexer" direktorija je treba razpakirati v nek direktorij, kjer se nahaja direktorij s html datotekami imenovan "data_websites" in podatkovna baza imenovana "inverted-index.db". To je pomembno, saj so nekatere lokacije fiksirane.
 
 3.) Ko je to urejeno, lahko zaženemo program: python Query.py ind sistem SPOT za iskanje v bazi ali python Query.py seq sistem SPOT za sekvenčno iskanje. V osnovi se kliče tako: python Query.py način_iskanja naštej_iskane_besede.
