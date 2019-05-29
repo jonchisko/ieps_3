@@ -16,7 +16,7 @@ class QueryMe:
         direktorij = "data_websites"
         print("Preparing files, please wait ...")
         t1 = time.time()
-        self.cur = self.create_conn("index.db").cursor()
+        self.cur = self.create_conn("inverted-index.db").cursor()
 
         file = "text_files_pickle"
 
